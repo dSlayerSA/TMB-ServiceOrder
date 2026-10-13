@@ -8,7 +8,10 @@ public record OrderResponse(
     string Product,
     decimal Amount,
     string Status,
-    DateTime CreatedAt)
+    DateTime CreatedAt,
+    DateTime UpdatedAt,
+    int ProcessingSeconds,
+    string Outcome)
 {
     public static OrderResponse FromDomain(Order order) => new(
         order.Id,
@@ -16,5 +19,8 @@ public record OrderResponse(
         order.Product,
         order.Amount,
         order.Status.ToString(),
-        order.CreatedAt);
+        order.CreatedAt,
+        order.UpdatedAt,
+        order.Plan.DurationSeconds,
+        order.Plan.Outcome.ToString());
 }

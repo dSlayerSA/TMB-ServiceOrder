@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
@@ -8,7 +9,9 @@ using OrderManagement.Application.Abstractions;
 using OrderManagement.Application.Orders;
 using OrderManagement.Domain.Messaging;
 using OrderManagement.Domain.Orders;
+using OpenTelemetry;
 using OrderManagement.Infrastructure.Messaging;
+using OrderManagement.Infrastructure.Observability;
 using OrderManagement.Infrastructure.Persistence;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -63,10 +66,27 @@ public class OrderCreatedConsumer : BackgroundService
 
     private async Task HandleMessageAsync(IChannel channel, BasicDeliverEventArgs ea, CancellationToken stoppingToken)
     {
+        // The publisher wrote the trace context into the AMQP headers; picking it
+        // up here is what keeps the Worker's work on the caller's trace instead
+        // of starting an unrelated one.
+        var parentContext = Telemetry.ExtractTraceContext(
+            new Telemetry.AmqpHeaderCarrier(ea.BasicProperties.Headers));
+        Baggage.Current = parentContext.Baggage;
+
+        using var activity = Telemetry.Source.StartActivity(
+            $"consume {RabbitMqTopology.OrderCreatedQueue}",
+            ActivityKind.Consumer,
+            parentContext.ActivityContext);
+
+        activity?.SetTag("messaging.system", "rabbitmq");
+        activity?.SetTag("messaging.operation.name", "receive");
+        activity?.SetTag("messaging.source.name", RabbitMqTopology.OrderCreatedQueue);
+
         try
         {
             var messageId = Guid.TryParse(ea.BasicProperties.MessageId, out var id) ? id : Guid.Empty;
             var @event = JsonSerializer.Deserialize<OrderCreatedEvent>(Encoding.UTF8.GetString(ea.Body.ToArray()));
+            activity?.SetTag("order.id", @event?.OrderId.ToString());
 
             if (@event is null)
             {
@@ -109,25 +129,43 @@ public class OrderCreatedConsumer : BackgroundService
 
             // Fire-and-forget delayed finalization; the StuckOrdersSweeper is the
             // safety net if the Worker crashes/restarts during this delay.
-            _ = Task.Run(() => FinalizeAfterDelayAsync(order.Id, stoppingToken), CancellationToken.None);
+            _ = Task.Run(
+                () => ApplyPlannedEndingAsync(
+                    order.Id, order.Plan.DurationSeconds, activity?.Context ?? default, stoppingToken),
+                CancellationToken.None);
         }
         catch (Exception ex)
         {
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
             _logger.LogError(ex, "Failed to handle OrderCreated message; requeueing.");
             await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: true, stoppingToken);
         }
     }
 
-    private async Task FinalizeAfterDelayAsync(Guid orderId, CancellationToken appStoppingToken)
+    /// <summary>
+    /// Waits out the order's processing window and then applies the ending its
+    /// plan asked for - Finalizado, Falhou or Cancelado.
+    /// </summary>
+    private async Task ApplyPlannedEndingAsync(
+        Guid orderId,
+        int durationSeconds,
+        ActivityContext parentContext,
+        CancellationToken appStoppingToken)
     {
         try
         {
-            await Task.Delay(TimeSpan.FromSeconds(5), appStoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(durationSeconds), appStoppingToken);
         }
         catch (TaskCanceledException)
         {
             return;
         }
+
+        // Explicitly parented: this runs on a detached task long after the consume
+        // span ended, so there is no ambient context left to inherit.
+        using var activity = Telemetry.Source.StartActivity(
+            "apply planned ending", ActivityKind.Internal, parentContext);
+        activity?.SetTag("order.id", orderId.ToString());
 
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<OrderManagementDbContext>();
@@ -137,7 +175,10 @@ public class OrderCreatedConsumer : BackgroundService
         if (order is null)
             return;
 
-        var newHistory = order.TransitionTo(OrderStatus.Finalizado, "Pedido finalizado pelo worker.");
+        var ending = order.Plan.FinalStatus;
+        activity?.SetTag("order.status", ending.ToString());
+
+        var newHistory = order.TransitionTo(ending, $"{StuckOrdersSweeper.NoteFor(ending)}.");
         if (newHistory is null)
             return;
 

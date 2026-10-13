@@ -18,6 +18,8 @@ public record OrderDetailResponse(
     string Status,
     DateTime CreatedAt,
     DateTime UpdatedAt,
+    int ProcessingSeconds,
+    string Outcome,
     IReadOnlyList<OrderStatusHistoryItem> History)
 {
     public static OrderDetailResponse FromDomain(Order order) => new(
@@ -28,6 +30,8 @@ public record OrderDetailResponse(
         order.Status.ToString(),
         order.CreatedAt,
         order.UpdatedAt,
+        order.Plan.DurationSeconds,
+        order.Plan.Outcome.ToString(),
         order.StatusHistories
             .OrderBy(h => h.ChangedAt)
             .Select(OrderStatusHistoryItem.FromDomain)
