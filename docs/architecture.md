@@ -3,21 +3,52 @@
 ## Visão geral
 
 ```mermaid
-flowchart LR
-    FE["Next.js Frontend"] -- "REST (POST/GET /orders)" --> API[".NET API"]
-    FE -- "SignalR (fallback: polling)" --> API
+flowchart TB
+    FE["Next.js<br/>painel · pedidos · perguntar"]
+    API[".NET API"]
+    MQ[("RabbitMQ")]
+    W["Worker"]
+    PG[("PostgreSQL<br/>Orders · Products · Outbox · Histórico")]
 
-    API -- "EF Core" --> PG[("PostgreSQL")]
-    API -- "grava Order + OutboxMessage\nna mesma transação" --> PG
-    API -- "OutboxPublisherBackgroundService\nlê mensagens pendentes" --> PG
-    API -- "publica OrderCreated" --> MQ[("RabbitMQ")]
+    FE -- "REST /orders /products /dashboard /analytics" --> API
+    API -. "⑥ SignalR (fallback: polling)" .-> FE
+    API == "① Order + OutboxMessage<br/>na mesma transação" ==> PG
+    API == "② publisher lê pendentes<br/>publica OrderCreated" ==> MQ
+    MQ == "③" ==> W
+    W == "④ aplica o plano do pedido<br/>grava o histórico" ==> PG
+    W == "⑤ OrderStatusChanged" ==> MQ
+    MQ -. "⑥" .-> API
 
-    MQ -- "consome OrderCreated" --> W["Worker"]
-    W -- "Pendente -> Processando -> Finalizado\n+ histórico de status" --> PG
-    W -- "publica OrderStatusChanged" --> MQ
-    MQ -- "consome OrderStatusChanged" --> API
-    API -- "repassa via SignalR Hub" --> FE
+    JG(["Jaeger · tracing"])
+    OL(["Ollama · profile opcional<br/>ou Claude API"])
+    API -. OTLP .-> JG
+    W -. OTLP .-> JG
+    API -. "/analytics" .-> OL
+
+    classDef opcional stroke-dasharray: 4 3,fill:#f6f7f9
+    class JG,OL opcional
 ```
+
+A trilha grossa é o caminho de um pedido, e os seis passos formam **um único trace**: o `traceparent` da requisição é gravado na linha do outbox (②) e o contexto viaja nos headers AMQP nos dois sentidos (③ e ⑥). Os nós tracejados são opcionais — a stack sobe sem eles.
+
+O trace acompanha os seis passos como **um único trace**: o `traceparent` da requisição é gravado na linha do outbox (②) e o contexto viaja nos headers AMQP nos dois sentidos (③ e ⑥). Os nós tracejados são opcionais — a stack sobe sem eles.
+
+## Máquina de estados do pedido
+
+```mermaid
+stateDiagram-v2
+    [*] --> Pendente
+    Pendente --> Processando
+    Processando --> Finalizado
+    Pendente --> Cancelado
+    Processando --> Falhou
+    Processando --> Cancelado
+    Finalizado --> [*]
+    Falhou --> [*]
+    Cancelado --> [*]
+```
+
+`Pendente → Processando → Finalizado` é a sequência obrigatória do desafio e continua sendo o **único** caminho até `Finalizado`. `Falhou` e `Cancelado` são terminais alternativos, existem para o simulador do worker, e nada sai deles. A tabela de transições permitidas em `Order` é a única fonte da verdade — há testes provando que não se pula etapa, não se retrocede e não se sai de um estado terminal.
 
 ## Camadas do backend (.NET)
 
