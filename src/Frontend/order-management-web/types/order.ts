@@ -1,4 +1,7 @@
-export type OrderStatus = "Pendente" | "Processando" | "Finalizado";
+export type OrderStatus = "Pendente" | "Processando" | "Finalizado" | "Falhou" | "Cancelado";
+
+/** What the worker should do when an order's processing window elapses. */
+export type ProcessingOutcome = "Concluir" | "Falhar" | "Cancelar";
 
 export interface Order {
   id: string;
@@ -7,6 +10,9 @@ export interface Order {
   amount: number;
   status: OrderStatus;
   createdAt: string;
+  updatedAt: string;
+  processingSeconds: number;
+  outcome: ProcessingOutcome;
 }
 
 export interface OrderStatusHistoryItem {
@@ -16,12 +22,12 @@ export interface OrderStatusHistoryItem {
 }
 
 export interface OrderDetail extends Order {
-  updatedAt: string;
   history: OrderStatusHistoryItem[];
 }
 
 export interface CreateOrderInput {
   customer: string;
-  product: string;
-  amount: number;
+  productId: string;
+  processingSeconds?: number;
+  outcome?: ProcessingOutcome;
 }

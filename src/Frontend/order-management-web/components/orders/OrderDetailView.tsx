@@ -1,66 +1,93 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { fetchOrderById } from "@/lib/api";
 import type { OrderDetail } from "@/types/order";
+import { cn } from "@/lib/utils";
+import { LocalDateTime } from "@/components/LocalDateTime";
+import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
 import { OrderStatusHistoryTimeline } from "@/components/orders/OrderStatusHistoryTimeline";
 import { RealtimeIndicator } from "@/components/orders/RealtimeIndicator";
 import { useOrderRealtime } from "@/hooks/useOrderRealtime";
 
-const currencyFormatter = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+const currency = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
 export function OrderDetailView({ initialOrder }: { initialOrder: OrderDetail }) {
   const [order, setOrder] = useState(initialOrder);
   const [justUpdated, setJustUpdated] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const refresh = useCallback(() => {
     fetchOrderById(initialOrder.id)
       .then((updated) => {
         setOrder(updated);
+        // A brief ring is the one place motion is justified here: it points at
+        // a change the user did not trigger.
         setJustUpdated(true);
-        setTimeout(() => setJustUpdated(false), 1500);
+        if (timer.current) clearTimeout(timer.current);
+        timer.current = setTimeout(() => setJustUpdated(false), 1200);
       })
       .catch(() => {
         /* keep showing the last known state on transient errors */
       });
   }, [initialOrder.id]);
 
+  useEffect(() => () => {
+    if (timer.current) clearTimeout(timer.current);
+  }, []);
+
   const mode = useOrderRealtime(order.id, refresh);
 
   return (
     <div className="space-y-6">
-      <div
-        className={`rounded-lg border p-5 transition-colors ${
-          justUpdated ? "border-blue-400 bg-blue-50 dark:border-blue-500 dark:bg-blue-500/10" : "border-gray-200 dark:border-gray-800"
-        }`}
-      >
-        <div className="flex items-start justify-between">
-          <div>
-            <h2 className="text-lg font-medium text-gray-900 dark:text-gray-50">{order.customer}</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{order.product}</p>
+      <Card className={cn("transition-shadow", justUpdated && "ring-2 ring-primary/40")}>
+        <CardContent className="space-y-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h1 className="truncate text-xl font-semibold tracking-tight">{order.product}</h1>
+              <p className="truncate text-sm text-muted-foreground">{order.customer}</p>
+            </div>
+            <OrderStatusBadge status={order.status} />
           </div>
-          <OrderStatusBadge status={order.status} />
-        </div>
-        <dl className="mt-4 grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <dt className="text-gray-500 dark:text-gray-400">Valor</dt>
-            <dd className="font-medium text-gray-900 dark:text-gray-50">{currencyFormatter.format(order.amount)}</dd>
-          </div>
-          <div>
-            <dt className="text-gray-500 dark:text-gray-400">Pedido</dt>
-            <dd className="font-mono text-xs text-gray-700 dark:text-gray-300">{order.id}</dd>
-          </div>
-        </dl>
-        <div className="mt-4">
+
+          <Separator />
+
+          <dl className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <dt className="text-xs text-muted-foreground">Valor</dt>
+              <dd className="tabular mt-1 font-mono text-lg">{currency.format(order.amount)}</dd>
+            </div>
+            <div>
+              <dt className="text-xs text-muted-foreground">Criado em</dt>
+              <dd className="tabular mt-1 font-mono text-sm">
+                <LocalDateTime value={order.createdAt} format="long" />
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs text-muted-foreground">Processamento</dt>
+              <dd className="tabular mt-1 font-mono text-sm">
+                {order.processingSeconds}s · {order.outcome}
+              </dd>
+            </div>
+            <div className="min-w-0">
+              <dt className="text-xs text-muted-foreground">Identificador</dt>
+              <dd className="mt-1 truncate font-mono text-sm text-muted-foreground" title={order.id}>
+                {order.id}
+              </dd>
+            </div>
+          </dl>
+        </CardContent>
+      </Card>
+
+      <section className="space-y-4">
+        <div className="flex items-baseline justify-between gap-4">
+          <h2 className="text-sm font-medium">Percurso do pedido</h2>
           <RealtimeIndicator mode={mode} />
         </div>
-      </div>
-
-      <div>
-        <h3 className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">Histórico de status</h3>
-        <OrderStatusHistoryTimeline history={order.history} />
-      </div>
+        <OrderStatusHistoryTimeline history={order.history} status={order.status} />
+      </section>
     </div>
   );
 }
