@@ -27,6 +27,12 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:80/misc/ping || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
   rabbitmq:
     image: rabbitmq:3-management-alpine
@@ -43,6 +49,48 @@ services:
       timeout: 10s
       retries: 10
 
+  # Optional local LLM for the analytics module, so it can be demonstrated
+  # without an API key or any spend. Off by default because it pulls a model
+  # worth a couple of gigabytes:
+  #   docker compose --profile local-ai up -d
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ["local-ai"]
+    volumes:
+      - ollama_models:/root/.ollama
+    ports:
+      - "11434:11434"
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  # One-shot: pulls the model so `up` is still a single command.
+  ollama-pull:
+    image: ollama/ollama:latest
+    profiles: ["local-ai"]
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    entrypoint: ["/bin/sh", "-c", "ollama pull ${OLLAMA_MODEL:-qwen2.5:3b}"]
+    restart: "no"
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.65.0
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "16686:16686"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:16686/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
   api:
     build:
       context: ./src/Backend
@@ -55,6 +103,14 @@ services:
       RabbitMq__User: ${RABBITMQ_USER}
       RabbitMq__Password: ${RABBITMQ_PASSWORD}
       Cors__AllowedOrigin: http://localhost:3000
+      Otlp__Endpoint: http://jaeger:4317
+      # Optional: with Provider=Claude and no key, the module reports disabled
+      # and the rest of the stack is unaffected.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      # Claude (default) or Ollama. Ollama needs the local-ai profile running.
+      Analytics__Provider: ${ANALYTICS_PROVIDER:-Claude}
+      Analytics__OllamaBaseUrl: http://ollama:11434
+      Analytics__OllamaModel: ${OLLAMA_MODEL:-qwen2.5:3b}
     ports:
       - "8080:8080"
     depends_on:
@@ -62,6 +118,9 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+      # Tracing is best-effort: a sick collector must never hold the app back.
+      jaeger:
+        condition: service_started
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 10s
@@ -80,9 +139,20 @@ services:
       RabbitMq__Port: 5672
       RabbitMq__User: ${RABBITMQ_USER}
       RabbitMq__Password: ${RABBITMQ_PASSWORD}
+      Otlp__Endpoint: http://jaeger:4317
     depends_on:
       api:
         condition: service_healthy
+      jaeger:
+        condition: service_started
+    # The Worker's /health reports whether this process can reach Postgres and
+    # RabbitMQ - a consumer that is running but disconnected is not healthy.
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
 
   frontend:
     build:
@@ -98,6 +168,20 @@ services:
     depends_on:
       api:
         condition: service_healthy
+    # node:22-alpine ships no curl/wget, so the probe uses node's own fetch.
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://localhost:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
 
 volumes:
   postgres_data:
+  ollama_models:

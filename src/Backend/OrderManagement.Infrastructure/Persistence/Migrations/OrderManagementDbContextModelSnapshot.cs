@@ -22,6 +22,90 @@ namespace OrderManagement.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("OrderManagement.Domain.Catalog.Product", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("numeric(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Products", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("8f3a1b20-0001-4a00-9c00-000000000001"),
+                            Name = "Notebook Pro 14",
+                            Price = 7499.00m
+                        },
+                        new
+                        {
+                            Id = new Guid("8f3a1b20-0002-4a00-9c00-000000000002"),
+                            Name = "Monitor 27\" 4K",
+                            Price = 2890.00m
+                        },
+                        new
+                        {
+                            Id = new Guid("8f3a1b20-0003-4a00-9c00-000000000003"),
+                            Name = "Teclado mecânico",
+                            Price = 649.90m
+                        },
+                        new
+                        {
+                            Id = new Guid("8f3a1b20-0004-4a00-9c00-000000000004"),
+                            Name = "Mouse sem fio",
+                            Price = 199.90m
+                        },
+                        new
+                        {
+                            Id = new Guid("8f3a1b20-0005-4a00-9c00-000000000005"),
+                            Name = "Headset com microfone",
+                            Price = 450.50m
+                        },
+                        new
+                        {
+                            Id = new Guid("8f3a1b20-0006-4a00-9c00-000000000006"),
+                            Name = "SSD NVMe 2TB",
+                            Price = 980.00m
+                        },
+                        new
+                        {
+                            Id = new Guid("8f3a1b20-0007-4a00-9c00-000000000007"),
+                            Name = "Webcam Full HD",
+                            Price = 320.00m
+                        },
+                        new
+                        {
+                            Id = new Guid("8f3a1b20-0008-4a00-9c00-000000000008"),
+                            Name = "Cadeira ergonômica",
+                            Price = 1250.90m
+                        },
+                        new
+                        {
+                            Id = new Guid("8f3a1b20-0009-4a00-9c00-000000000009"),
+                            Name = "Dock USB-C",
+                            Price = 699.00m
+                        },
+                        new
+                        {
+                            Id = new Guid("8f3a1b20-000a-4a00-9c00-00000000000a"),
+                            Name = "Impressora laser",
+                            Price = 2340.00m
+                        });
+                });
+
             modelBuilder.Entity("OrderManagement.Domain.Messaging.ProcessedMessage", b =>
                 {
                     b.Property<Guid>("MessageId")
@@ -58,6 +142,9 @@ namespace OrderManagement.Infrastructure.Persistence.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<Guid?>("ProductId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -67,6 +154,8 @@ namespace OrderManagement.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
 
                     b.ToTable("Orders", (string)null);
                 });
@@ -130,11 +219,49 @@ namespace OrderManagement.Infrastructure.Persistence.Migrations
                     b.Property<DateTime?>("ProcessedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("TraceParent")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ProcessedAt");
 
                     b.ToTable("OutboxMessages", (string)null);
+                });
+
+            modelBuilder.Entity("OrderManagement.Domain.Orders.Order", b =>
+                {
+                    b.HasOne("OrderManagement.Domain.Catalog.Product", null)
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.OwnsOne("OrderManagement.Domain.Orders.ProcessingPlan", "Plan", b1 =>
+                        {
+                            b1.Property<Guid>("OrderId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<int>("DurationSeconds")
+                                .HasColumnType("integer")
+                                .HasColumnName("ProcessingDurationSeconds");
+
+                            b1.Property<string>("Outcome")
+                                .IsRequired()
+                                .HasMaxLength(20)
+                                .HasColumnType("character varying(20)")
+                                .HasColumnName("ProcessingOutcome");
+
+                            b1.HasKey("OrderId");
+
+                            b1.ToTable("Orders");
+
+                            b1.WithOwner()
+                                .HasForeignKey("OrderId");
+                        });
+
+                    b.Navigation("Plan")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("OrderManagement.Domain.Orders.OrderStatusHistory", b =>
