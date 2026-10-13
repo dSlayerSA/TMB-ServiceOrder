@@ -1,0 +1,18 @@
+{
+  "id": "{scrubbed-guid}",
+  "customer": "Joao Souza",
+  "product": "Mouse sem fio",
+  "amount": 199.90,
+  "status": "Pendente",
+  "createdAt": "{scrubbed-timestamp}",
+  "updatedAt": "{scrubbed-timestamp}",
+  "processingSeconds": 5,
+  "outcome": "Concluir",
+  "history": [
+    {
+      "status": "Pendente",
+      "changedAt": "{scrubbed-timestamp}",
+      "note": "Pedido criado."
+    }
+  ]
+}

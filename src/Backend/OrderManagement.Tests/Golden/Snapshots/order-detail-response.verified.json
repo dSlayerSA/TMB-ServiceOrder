@@ -1,0 +1,28 @@
+{
+  "id": "{scrubbed-guid}",
+  "customer": "Maria Silva",
+  "product": "Notebook Pro 14",
+  "amount": 7499.00,
+  "status": "Finalizado",
+  "createdAt": "{scrubbed-timestamp}",
+  "updatedAt": "{scrubbed-timestamp}",
+  "processingSeconds": 5,
+  "outcome": "Concluir",
+  "history": [
+    {
+      "status": "Pendente",
+      "changedAt": "{scrubbed-timestamp}",
+      "note": "Pedido criado."
+    },
+    {
+      "status": "Processando",
+      "changedAt": "{scrubbed-timestamp}",
+      "note": "Processamento iniciado pelo worker."
+    },
+    {
+      "status": "Finalizado",
+      "changedAt": "{scrubbed-timestamp}",
+      "note": "Pedido finalizado pelo worker."
+    }
+  ]
+}

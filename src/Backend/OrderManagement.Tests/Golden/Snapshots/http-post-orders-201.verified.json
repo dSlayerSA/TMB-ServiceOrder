@@ -1,0 +1,11 @@
+{
+  "id": "{scrubbed-guid}",
+  "customer": "Maria Silva",
+  "product": "Notebook Pro 14",
+  "amount": 7499.00,
+  "status": "Pendente",
+  "createdAt": "{scrubbed-timestamp}",
+  "updatedAt": "{scrubbed-timestamp}",
+  "processingSeconds": 5,
+  "outcome": "Concluir"
+}

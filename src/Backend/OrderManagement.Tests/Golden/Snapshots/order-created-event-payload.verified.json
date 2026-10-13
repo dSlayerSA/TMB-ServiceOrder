@@ -1,0 +1,7 @@
+{
+  "OrderId": "{scrubbed-guid}",
+  "Customer": "Maria Silva",
+  "Product": "Notebook Pro 14",
+  "Amount": 7499.00,
+  "CreatedAt": "{scrubbed-timestamp}"
+}
