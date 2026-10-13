@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
@@ -31,18 +30,20 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.ConfigureAppConfiguration((_, config) =>
-        {
-            config.AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["ConnectionStrings:Default"] = _postgres.GetConnectionString(),
-                // Point at a host that will never resolve, so the outbox publisher and
-                // the status-changed relay fail fast instead of accidentally reaching
-                // a real broker (e.g. one left running from `docker compose up`) - this
-                // test only verifies the write side (Order + OutboxMessage persisted).
-                ["RabbitMq:Host"] = "rabbitmq.invalid"
-            });
-        });
+        // These MUST go through UseSetting rather than ConfigureAppConfiguration:
+        // under minimal hosting (WebApplication.CreateBuilder), the app re-applies
+        // its own appsettings.json when the inner host is built, which silently
+        // overrides anything added via ConfigureAppConfiguration here. The symptom
+        // is nasty - the tests fall back to appsettings' Host=localhost;Port=5432
+        // and quietly pass against whatever Postgres the developer happens to have
+        // running locally, instead of the disposable container.
+        builder.UseSetting("ConnectionStrings:Default", _postgres.GetConnectionString());
+
+        // Point at a host that will never resolve, so the outbox publisher and
+        // the status-changed relay fail fast instead of accidentally reaching
+        // a real broker (e.g. one left running from `docker compose up`) - this
+        // test only verifies the write side (Order + OutboxMessage persisted).
+        builder.UseSetting("RabbitMq:Host", "rabbitmq.invalid");
 
         builder.ConfigureServices(services =>
         {
