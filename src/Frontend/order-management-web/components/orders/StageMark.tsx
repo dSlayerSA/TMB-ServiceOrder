@@ -29,6 +29,18 @@ export const STAGE_BG: Record<OrderStatus, string> = {
   Cancelado: "bg-stage-cancelled",
 };
 
+/**
+ * The raw token, for the one case that needs a value rather than a class: the
+ * wash a row gets when its status changes under the viewer.
+ */
+export const STAGE_VAR: Record<OrderStatus, string> = {
+  Pendente: "var(--stage-pending)",
+  Processando: "var(--stage-processing)",
+  Finalizado: "var(--stage-done)",
+  Falhou: "var(--stage-failed)",
+  Cancelado: "var(--stage-cancelled)",
+};
+
 /** Travelled segments of the timeline, dimmed so the marks stay dominant. */
 export const STAGE_LINE: Record<OrderStatus, string> = {
   Pendente: "bg-stage-pending/50",

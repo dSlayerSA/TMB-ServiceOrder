@@ -11,8 +11,8 @@
   /* next/font injects these on <html> at runtime, so they are referenced (not
    * inlined as literals) and resolve in the browser. */
   --font-sans: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-condensed: var(--font-plex-condensed), var(--font-plex-sans), ui-sans-serif, sans-serif;
   --font-mono: var(--font-plex-mono), ui-monospace, monospace;
-  --font-heading: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
 
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -22,22 +22,14 @@
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-grid: var(--chart-grid);
 
-  /* Chart fills are a separate ramp from the UI text colours above: the
-   * validator requires chart marks to sit inside the mode lightness band,
-   * which is darker than what small status text wants on a dark surface.
-   * Both ramps were checked with scripts/validate_palette.js. */
+  --color-chart-grid: var(--chart-grid);
   --color-chart-pendente: var(--chart-pendente);
   --color-chart-processando: var(--chart-processando);
   --color-chart-finalizado: var(--chart-finalizado);
   --color-chart-falhou: var(--chart-falhou);
   --color-chart-cancelado: var(--chart-cancelado);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
+
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -55,126 +47,128 @@
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
 
-  /* The three pipeline stages. Colour peaks at "processando" rather than
-   * ascending to "finalizado": what deserves attention on an operations board
-   * is work in motion, and a board full of finished orders should read calm.
-   * Progression is carried by the ring shape instead (see StageMark). */
+  /* A third surface step, so panels can be layered by value instead of by
+   * drawing another outline around them. */
+  --color-sunken: var(--sunken);
+
+  /* The only colour in the interface. Everything else - buttons, links, focus,
+   * active navigation - is achromatic, so colour never competes with status.
+   * "Pendente" is deliberately neutral: nothing is happening to it yet. */
   --color-stage-pending: var(--stage-pending);
   --color-stage-processing: var(--stage-processing);
   --color-stage-done: var(--stage-done);
-  /* The two alternative endings sit outside the blue family on purpose: a
-   * failure and a cancellation must never be mistaken for a normal finish. */
   --color-stage-failed: var(--stage-failed);
   --color-stage-cancelled: var(--stage-cancelled);
 
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  /* Radius by role, not one value stamped on everything: controls are touched,
+   * surfaces are not, and table cells are part of a grid. */
+  --radius-sm: 2px;
+  --radius-md: 3px;
+  --radius-lg: 4px;
+  --radius-xl: 6px;
+  --radius-2xl: 8px;
+  --radius-3xl: 10px;
+  --radius-4xl: 12px;
 }
 
 :root {
-  --radius: 0.5rem;
+  --radius: 4px;
 
-  --background: #f6f7f9;
-  --foreground: #0c1118;
+  /* Warm-neutral greys: machined metal rather than the cool blue-grey that
+   * reads as a technology template. */
+  --background: #f2f1ef;
+  --foreground: #17161a;
   --card: #ffffff;
-  --card-foreground: #0c1118;
+  --card-foreground: #17161a;
+  --sunken: #e8e7e4;
   --popover: #ffffff;
-  --popover-foreground: #0c1118;
-  --primary: #2563d9;
-  --primary-foreground: #ffffff;
-  --secondary: #edf0f4;
-  --secondary-foreground: #0c1118;
-  --muted: #edf0f4;
-  --muted-foreground: #5a6678;
-  --accent: #e6edfb;
-  --accent-foreground: #15396e;
-  --destructive: #c8362b;
-  --border: #dde2ea;
-  --input: #dde2ea;
-  --ring: #2563d9;
+  --popover-foreground: #17161a;
 
-  /* Re-stepped against scripts/validate_palette.js: the previous single-blue
-   * ramp put Processando and Finalizado below the normal-vision floor, and
-   * amber/red were indistinguishable under deuteranopia. */
-  --stage-pending: #64748b;
+  --primary: #17161a;
+  --primary-foreground: #f7f6f5;
+  --secondary: #e8e7e4;
+  --secondary-foreground: #17161a;
+  --muted: #e8e7e4;
+  --muted-foreground: #4a484f;
+  --accent: #e2e0dd;
+  --accent-foreground: #17161a;
+  --destructive: #c0392b;
+  --border: #d9d7db;
+  --input: #cfccd2;
+  --ring: #6e6b73;
+  /* Spelled as a plain rgba rather than a color-mix: the minifier collapses a
+   * color-mix in box-shadow position down to the opaque colour. */
+  --channel-edge: rgb(0 0 0 / 0.08);
+
+  /* Validated with the dataviz palette script. Pendente fails the chroma floor
+   * on purpose - it is a neutral slot, carried by the ring shape and the label. */
+  --stage-pending: #8e8c93;
   --stage-processing: #2563d9;
   --stage-done: #0f8a6a;
   --stage-failed: #c0392b;
   --stage-cancelled: #8046c8;
 
-  --chart-1: #2563d9;
-  --chart-2: #0f8a6a;
-  --chart-3: #c0392b;
-  --chart-4: #8046c8;
-  --chart-5: #64748b;
-  --chart-grid: #e3e8ef;
-  --chart-pendente: #64748b;
+  --chart-grid: #e2e0dd;
+  --chart-pendente: #8e8c93;
   --chart-processando: #2563d9;
   --chart-finalizado: #0f8a6a;
   --chart-falhou: #c0392b;
   --chart-cancelado: #8046c8;
 
-  --sidebar: #ffffff;
-  --sidebar-foreground: #0c1118;
-  --sidebar-primary: #2563d9;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #e6edfb;
-  --sidebar-accent-foreground: #15396e;
-  --sidebar-border: #dde2ea;
-  --sidebar-ring: #2563d9;
+  --sidebar: #ebeae7;
+  --sidebar-foreground: #17161a;
+  --sidebar-primary: #17161a;
+  --sidebar-primary-foreground: #f7f6f5;
+  --sidebar-accent: #dedcd9;
+  --sidebar-accent-foreground: #17161a;
+  --sidebar-border: #d4d2cf;
+  --sidebar-ring: #6e6b73;
 }
 
 .dark {
-  --background: #0c1118;
-  --foreground: #e8ecf2;
-  --card: #121926;
-  --card-foreground: #e8ecf2;
-  --popover: #121926;
-  --popover-foreground: #e8ecf2;
-  --primary: #4d8df0;
-  --primary-foreground: #06101f;
-  --secondary: #1b2433;
-  --secondary-foreground: #e8ecf2;
-  --muted: #1b2433;
-  --muted-foreground: #92a0b5;
-  --accent: #17263f;
-  --accent-foreground: #afccff;
-  --destructive: #f0675c;
-  --border: #222d3e;
-  --input: #2a3850;
-  --ring: #4d8df0;
+  --background: #131215;
+  --foreground: #edecef;
+  --card: #1b1a1f;
+  --card-foreground: #edecef;
+  --sunken: #0e0d10;
+  --popover: #1f1e24;
+  --popover-foreground: #edecef;
 
-  --stage-pending: #8b98ad;
+  --primary: #edecef;
+  --primary-foreground: #17161a;
+  --secondary: #26252b;
+  --secondary-foreground: #edecef;
+  --muted: #26252b;
+  --muted-foreground: #9d9aa3;
+  --accent: #2e2d34;
+  --accent-foreground: #edecef;
+  --destructive: #e05a4e;
+  --border: #2b2930;
+  --input: #38363f;
+  --ring: #8a8790;
+  --channel-edge: rgb(0 0 0 / 0.45);
+
+  --stage-pending: #9d9aa3;
   --stage-processing: #5b9bff;
-  --stage-done: #189079;
-  --stage-failed: #d1483e;
-  --stage-cancelled: #8f5fd8;
+  --stage-done: #2aa98d;
+  --stage-failed: #e05a4e;
+  --stage-cancelled: #a579e8;
 
-  --chart-1: #5b9bff;
-  --chart-2: #189079;
-  --chart-3: #d1483e;
-  --chart-4: #8f5fd8;
-  --chart-5: #8b98ad;
-  --chart-grid: #1e2838;
-  --chart-pendente: #78828f;
+  --chart-grid: #26252b;
+  --chart-pendente: #6a676f;
   --chart-processando: #2b74e6;
   --chart-finalizado: #0f8f78;
   --chart-falhou: #d4473c;
   --chart-cancelado: #9460dc;
 
-  --sidebar: #0f1724;
-  --sidebar-foreground: #e8ecf2;
-  --sidebar-primary: #5b9bff;
-  --sidebar-primary-foreground: #06101f;
-  --sidebar-accent: #17263f;
-  --sidebar-accent-foreground: #afccff;
-  --sidebar-border: #222d3e;
-  --sidebar-ring: #4d8df0;
+  --sidebar: #19181d;
+  --sidebar-foreground: #edecef;
+  --sidebar-primary: #edecef;
+  --sidebar-primary-foreground: #17161a;
+  --sidebar-accent: #2b2930;
+  --sidebar-accent-foreground: #edecef;
+  --sidebar-border: #26252b;
+  --sidebar-ring: #8a8790;
 }
 
 @layer base {
@@ -193,6 +187,30 @@
   }
 }
 
+/* Structural labels - table headers, field labels - take a condensed width.
+ * Reads as an instrument panel rather than as body text shrunk down. */
+.label {
+  font-family: var(--font-plex-condensed), var(--font-plex-sans), ui-sans-serif, sans-serif;
+  font-size: 0.78rem;
+  letter-spacing: 0.01em;
+  color: var(--muted-foreground);
+}
+
+/* The figures are the one loud thing on the page. */
+.figure {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  font-weight: 500;
+}
+
+/* A recessed channel, the way a gauge is cut into a panel, instead of a
+ * floating rounded pill. */
+.channel {
+  background: var(--sunken);
+  box-shadow: inset 0 1px 0 var(--channel-edge);
+}
+
 /* The only ambient motion in the app: it marks an order actually in flight. */
 @keyframes stage-breathe {
   0%,
@@ -200,7 +218,7 @@
     opacity: 1;
   }
   50% {
-    opacity: 0.45;
+    opacity: 0.4;
   }
 }
 
@@ -208,8 +226,24 @@
   animation: stage-breathe 1.8s ease-in-out infinite;
 }
 
+/* Answers a change the user did not trigger: the row washes in the new status
+ * colour and settles. Nothing else on the page moves on its own. */
+@keyframes settle {
+  from {
+    background-color: color-mix(in oklab, var(--settle-tint) 22%, transparent);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+
+.settle {
+  animation: settle 700ms ease-out;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .stage-breathe {
+  .stage-breathe,
+  .settle {
     animation: none;
   }
 }
