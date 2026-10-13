@@ -1,9 +1,12 @@
+using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using OrderManagement.Application.Abstractions;
 using OrderManagement.Application.Orders;
+using OpenTelemetry;
 using OrderManagement.Infrastructure.Messaging;
+using OrderManagement.Infrastructure.Observability;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
@@ -38,12 +41,30 @@ public class OrderStatusChangedRelayConsumer : BackgroundService
         var consumer = new AsyncEventingBasicConsumer(channel);
         consumer.ReceivedAsync += async (_, ea) =>
         {
+            var parentContext = Telemetry.ExtractTraceContext(
+                new Telemetry.AmqpHeaderCarrier(ea.BasicProperties.Headers));
+            Baggage.Current = parentContext.Baggage;
+
+            // Closes the loop: the SignalR push lands on the same trace as the
+            // POST /orders that originally created the order.
+            using var activity = Telemetry.Source.StartActivity(
+                $"consume {RabbitMqTopology.OrderStatusChangedQueue}",
+                ActivityKind.Consumer,
+                parentContext.ActivityContext);
+
+            activity?.SetTag("messaging.system", "rabbitmq");
+            activity?.SetTag("messaging.operation.name", "receive");
+            activity?.SetTag("messaging.source.name", RabbitMqTopology.OrderStatusChangedQueue);
+
             try
             {
                 var json = Encoding.UTF8.GetString(ea.Body.ToArray());
                 var @event = JsonSerializer.Deserialize<OrderStatusChangedEvent>(json);
                 if (@event is not null)
                 {
+                    activity?.SetTag("order.id", @event.OrderId.ToString());
+                    activity?.SetTag("order.status", @event.Status.ToString());
+
                     using var scope = _scopeFactory.CreateScope();
                     var notifier = scope.ServiceProvider.GetRequiredService<IOrderStatusNotifier>();
                     await notifier.NotifyStatusChangedAsync(@event.OrderId, @event.Status, stoppingToken);
@@ -53,6 +74,7 @@ public class OrderStatusChangedRelayConsumer : BackgroundService
             }
             catch (Exception ex)
             {
+                activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
                 _logger.LogError(ex, "Failed to relay order status change to SignalR.");
                 await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: true, stoppingToken);
             }

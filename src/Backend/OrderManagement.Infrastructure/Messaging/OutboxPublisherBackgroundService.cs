@@ -1,9 +1,11 @@
+using System.Diagnostics;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using OrderManagement.Domain.Outbox;
+using OrderManagement.Infrastructure.Observability;
 using OrderManagement.Infrastructure.Persistence;
 using RabbitMQ.Client;
 
@@ -78,19 +80,35 @@ public class OutboxPublisherBackgroundService : BackgroundService
 
     private async Task PublishOneAsync(IChannel channel, OutboxMessage message, CancellationToken ct)
     {
+        // Parented to the request that wrote the row (see OutboxMessage.TraceParent),
+        // so the publish is part of that trace even though it happens later here.
+        using var activity = Telemetry.Source.StartActivity(
+            $"publish {RabbitMqTopology.OrderCreatedRoutingKey}",
+            ActivityKind.Producer,
+            Telemetry.ParseTraceParent(message.TraceParent));
+
+        activity?.SetTag("messaging.system", "rabbitmq");
+        activity?.SetTag("messaging.operation.name", "publish");
+        activity?.SetTag("messaging.destination.name", RabbitMqTopology.OrdersExchange);
+        activity?.SetTag("messaging.message.id", message.Id.ToString());
+        activity?.SetTag("order.id", message.CorrelationId.ToString());
+
         try
         {
             var body = Encoding.UTF8.GetBytes(message.Payload);
+            var headers = new Dictionary<string, object?>
+            {
+                ["EventType"] = message.EventType
+            };
+            Telemetry.InjectTraceContext(activity, headers);
+
             var properties = new BasicProperties
             {
                 MessageId = message.Id.ToString(),
                 CorrelationId = message.CorrelationId.ToString(),
                 ContentType = "application/json",
                 Persistent = true,
-                Headers = new Dictionary<string, object?>
-                {
-                    ["EventType"] = message.EventType
-                }
+                Headers = headers
             };
 
             await channel.BasicPublishAsync(
@@ -105,6 +123,7 @@ public class OutboxPublisherBackgroundService : BackgroundService
         }
         catch (Exception ex)
         {
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
             _logger.LogWarning(ex, "Failed to publish outbox message {MessageId} (attempt {Attempts}).", message.Id, message.Attempts + 1);
             message.MarkFailed(ex.Message);
         }

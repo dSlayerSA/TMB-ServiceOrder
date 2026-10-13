@@ -11,9 +11,16 @@ public class OutboxMessage
     public int Attempts { get; private set; }
     public string? Error { get; private set; }
 
+    /// <summary>
+    /// W3C traceparent of the request that produced this message. The publish
+    /// happens later, on a background service, so without this the published
+    /// span would start a brand new trace instead of continuing the caller's.
+    /// </summary>
+    public string? TraceParent { get; private set; }
+
     private OutboxMessage() { }
 
-    public OutboxMessage(string eventType, Guid correlationId, string payload)
+    public OutboxMessage(string eventType, Guid correlationId, string payload, string? traceParent = null)
     {
         Id = Guid.NewGuid();
         OccurredAt = DateTime.UtcNow;
@@ -21,6 +28,7 @@ public class OutboxMessage
         CorrelationId = correlationId;
         Payload = payload;
         Attempts = 0;
+        TraceParent = traceParent;
     }
 
     public void MarkProcessed()
