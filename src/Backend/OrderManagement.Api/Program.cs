@@ -1,15 +1,23 @@
+using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using OrderManagement.Api.Hubs;
 using OrderManagement.Api.Messaging;
 using OrderManagement.Application.Abstractions;
 using OrderManagement.Application.Orders;
 using OrderManagement.Infrastructure;
+using OrderManagement.Infrastructure.Analytics;
 using OrderManagement.Infrastructure.Messaging;
+using OrderManagement.Infrastructure.Observability;
 using OrderManagement.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+// Enums travel as their names, not their numbers: a request carrying
+// "outcome": "Falhar" is readable, and the API stays stable if the underlying
+// enum values are ever renumbered.
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSignalR();
@@ -24,6 +32,8 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddObservability(builder.Configuration, Telemetry.ServiceNameApi);
+builder.Services.AddAnalytics(builder.Configuration);
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IOrderStatusNotifier, SignalROrderStatusNotifier>();
 builder.Services.AddHostedService<OutboxPublisherBackgroundService>();

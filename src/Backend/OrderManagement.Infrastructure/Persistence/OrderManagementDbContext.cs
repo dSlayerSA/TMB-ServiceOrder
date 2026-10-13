@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using OrderManagement.Application.Abstractions;
+using OrderManagement.Domain.Catalog;
 using OrderManagement.Domain.Messaging;
 using OrderManagement.Domain.Orders;
 using OrderManagement.Domain.Outbox;
@@ -12,6 +13,7 @@ public class OrderManagementDbContext : DbContext, IUnitOfWork
     {
     }
 
+    public DbSet<Product> Products => Set<Product>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderStatusHistory> OrderStatusHistories => Set<OrderStatusHistory>();
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();

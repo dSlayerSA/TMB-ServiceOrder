@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OrderManagement.Application.Abstractions;
+using OrderManagement.Application.Analytics;
+using OrderManagement.Application.Catalog;
 using OrderManagement.Infrastructure.Messaging;
 using OrderManagement.Infrastructure.Persistence;
 
@@ -21,6 +23,8 @@ public static class DependencyInjection
         services.AddDbContext<OrderManagementDbContext>(options => options.UseNpgsql(connectionString));
 
         services.AddScoped<IOrderRepository, OrderRepository>();
+        services.AddScoped<IProductCatalog, ProductCatalog>();
+        services.AddScoped<IDashboardQueries, DashboardQueries>();
         services.AddScoped<IOutboxWriter, OutboxWriter>();
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<OrderManagementDbContext>());
 
