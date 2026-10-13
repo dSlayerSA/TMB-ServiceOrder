@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { ThroughputPoint } from "@/types/dashboard";
 import type { OrderStatus } from "@/types/order";
-import { cn } from "@/lib/utils";
 import { StageMark } from "@/components/orders/StageMark";
 
 const clock = new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit" });
@@ -38,15 +37,7 @@ type Row = Record<string, number | string | boolean> & { label: string; isCurren
  * end up". The window is adjustable because a whole day in hourly buckets
  * collapses a burst from the last few minutes into a single column.
  */
-export function ThroughputChart({
-  data,
-  windowHours,
-  onWindowChange,
-}: {
-  data: ThroughputPoint[];
-  windowHours: WindowHours;
-  onWindowChange: (hours: WindowHours) => void;
-}) {
+export function ThroughputChart({ data }: { data: ThroughputPoint[] }) {
   // Labels are formatted in the viewer timezone, which the server does not know;
   // rendering them during SSR produces a hydration mismatch. The chart also
   // needs a measured box before ResponsiveContainer can lay it out.
@@ -67,39 +58,13 @@ export function ThroughputChart({
 
   const peak = Math.max(...rows.map((r) => Number(r.total)), 1);
   const isEmpty = rows.every((r) => Number(r.total) === 0);
-  const activeWindow = WINDOWS.find((w) => w.hours === windowHours) ?? WINDOWS[2];
 
   return (
     <div className="space-y-4">
-      {/* Filters sit in one row above the chart. */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-xs text-muted-foreground">
-          Uma coluna por {activeWindow.bucket}
-        </p>
-        <div className="flex gap-1" role="group" aria-label="Janela de tempo">
-          {WINDOWS.map((option) => (
-            <button
-              key={option.hours}
-              type="button"
-              onClick={() => onWindowChange(option.hours)}
-              aria-pressed={option.hours === windowHours}
-              className={cn(
-                "rounded-md px-2.5 py-1 text-xs transition-colors",
-                option.hours === windowHours
-                  ? "bg-secondary font-medium text-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
       {!mounted ? (
-        <div className="h-52 w-full" aria-hidden="true" />
+        <div className="h-56 w-full" aria-hidden="true" />
       ) : (
-        <div className="h-52 w-full">
+        <div className="h-56 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={rows} margin={{ top: 8, right: 8, bottom: 0, left: -24 }} barCategoryGap="18%">
               <CartesianGrid stroke="var(--chart-grid)" strokeWidth={1} vertical={false} />
@@ -129,7 +94,7 @@ export function ThroughputChart({
                   const present = SERIES.filter((s) => Number(row[s.key]) > 0);
 
                   return (
-                    <div className="min-w-52 rounded-md border bg-popover px-3 py-2 shadow-md">
+                    <div className="min-w-52 rounded border border-border bg-popover px-3 py-2 shadow-lg">
                       <div className="flex items-baseline justify-between gap-4 border-b pb-1.5">
                         <span className="tabular font-mono text-xs text-muted-foreground">
                           {row.exact}
@@ -184,7 +149,7 @@ export function ThroughputChart({
                   strokeWidth={1}
                   maxBarSize={24}
                   // Only the topmost segment carries the rounded data-end.
-                  radius={index === SERIES.length - 1 ? [3, 3, 0, 0] : 0}
+                  radius={index === SERIES.length - 1 ? [2, 2, 0, 0] : 0}
                   isAnimationActive={false}
                 />
               ))}
@@ -194,12 +159,12 @@ export function ThroughputChart({
       )}
 
       {/* Five series, so a legend is mandatory - identity is never colour alone. */}
-      <ul className="flex flex-wrap gap-x-5 gap-y-2">
+      <ul className="flex flex-wrap gap-x-5 gap-y-2 border-t border-border pt-3">
         {SERIES.map((series) => (
           <li key={series.key} className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <span
               aria-hidden="true"
-              className="size-2.5 rounded-[2px]"
+              className="size-2.5 rounded-[1px]"
               style={{ background: series.fill }}
             />
             {series.status}

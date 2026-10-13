@@ -74,7 +74,7 @@ export function OrderStatusHistoryTimeline({
                   <LocalDateTime
                     value={item.changedAt}
                     format="time"
-                    className="tabular font-mono text-xs text-muted-foreground"
+                    className="figure text-xs text-muted-foreground"
                   />
                 ) : (
                   <span className="text-xs text-muted-foreground/60">
@@ -83,7 +83,7 @@ export function OrderStatusHistoryTimeline({
                   </span>
                 )}
                 {item && previous && (
-                  <span className="tabular font-mono text-xs text-muted-foreground/70">
+                  <span className="figure text-xs text-muted-foreground/70">
                     +{elapsed(previous.changedAt, item.changedAt)}
                   </span>
                 )}

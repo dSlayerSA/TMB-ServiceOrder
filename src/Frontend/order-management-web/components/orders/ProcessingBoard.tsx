@@ -4,6 +4,7 @@ import type { Order } from "@/types/order";
 import { useNow } from "@/hooks/useNow";
 import { isTerminal } from "@/components/orders/StageMark";
 import { ProcessingCard } from "@/components/orders/ProcessingCard";
+import { EmptyNote } from "@/components/ui/panel";
 
 /**
  * The orders currently in flight, each with its own progress. This is the part
@@ -17,14 +18,15 @@ export function ProcessingBoard({ orders }: { orders: Order[] }) {
 
   if (inFlight.length === 0) {
     return (
-      <p className="rounded-lg border border-dashed px-4 py-6 text-center text-sm text-muted-foreground">
-        Nenhum pedido em andamento. Crie um para ver o worker trabalhando.
-      </p>
+      <EmptyNote
+        title="Nenhum pedido em andamento"
+        hint="Crie um pedido para ver o worker trabalhando."
+      />
     );
   }
 
   return (
-    <ul className="grid gap-3 sm:grid-cols-2">
+    <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
       {inFlight.map((order) => (
         <li key={order.id}>
           <ProcessingCard order={order} now={now} />

@@ -4,12 +4,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { fetchDashboard } from "@/lib/api";
 import type { DashboardSnapshot } from "@/types/dashboard";
 import { useOrderRealtime } from "@/hooks/useOrderRealtime";
+import { PageHeader } from "@/components/app-shell";
 import { NewOrderDialog } from "@/components/orders/NewOrderDialog";
 import { ProcessingBoard } from "@/components/orders/ProcessingBoard";
 import { RealtimeIndicator } from "@/components/orders/RealtimeIndicator";
+import { Cluster, EmptyNote, Panel, PanelBody, PanelHeader } from "@/components/ui/panel";
 import { StatTile } from "@/components/dashboard/StatTile";
 import { StatusDistribution } from "@/components/dashboard/StatusDistribution";
-import { ThroughputChart, type WindowHours } from "@/components/dashboard/ThroughputChart";
+import { ThroughputChart, WINDOWS, type WindowHours } from "@/components/dashboard/ThroughputChart";
+import { cn } from "@/lib/utils";
 
 const currency = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const percent = new Intl.NumberFormat("pt-BR", { style: "percent", maximumFractionDigits: 0 });
@@ -40,9 +43,13 @@ export function DashboardView({ initial }: { initial: DashboardSnapshot | null }
 
   if (!snapshot) {
     return (
-      <p className="rounded-lg border border-dashed px-4 py-10 text-center text-sm text-muted-foreground">
-        O painel não carregou. Verifique se a API está no ar.
-      </p>
+      <div className="space-y-6">
+        <PageHeader title="Painel" />
+        <EmptyNote
+          title="O painel não carregou"
+          hint="Verifique se a API está no ar e recarregue a página."
+        />
+      </div>
     );
   }
 
@@ -50,36 +57,38 @@ export function DashboardView({ initial }: { initial: DashboardSnapshot | null }
     .filter((s) => s.status === "Finalizado" || s.status === "Falhou" || s.status === "Cancelado")
     .reduce((sum, s) => sum + s.count, 0);
 
-  return (
-    <div className="space-y-8">
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div className="space-y-1">
-          <h1 className="text-xl font-semibold tracking-tight">Painel</h1>
-          <p className="text-sm text-muted-foreground">
-            O estado do pipeline agora, e como os pedidos vêm terminando.
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <RealtimeIndicator mode={mode} />
-          <NewOrderDialog onCreated={refresh} />
-        </div>
-      </header>
+  const activeWindow = WINDOWS.find((w) => w.hours === windowHours) ?? WINDOWS[2];
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        title="Painel"
+        description="O estado do pipeline agora, e como os pedidos vêm terminando."
+      >
+        <RealtimeIndicator mode={mode} />
+        <NewOrderDialog onCreated={refresh} />
+      </PageHeader>
+
+      <Cluster className="lg:grid-cols-4">
         <StatTile
           label="Em andamento"
           value={String(snapshot.inFlight)}
-          meta={currency.format(snapshot.amountInFlight) + " em jogo"}
+          meta={`${currency.format(snapshot.amountInFlight)} em jogo`}
           accent={snapshot.inFlight > 0 ? "text-stage-processing" : undefined}
         />
-        <StatTile label="Criados hoje" value={String(snapshot.createdToday)} />
+        <StatTile
+          label="Criados hoje"
+          value={String(snapshot.createdToday)}
+          meta="desde a meia-noite"
+        />
         <StatTile
           label="Tempo médio até finalizar"
           value={
             snapshot.averageProcessingSeconds === null
               ? "—"
-              : `${snapshot.averageProcessingSeconds.toFixed(1).replace(".", ",")}s`
+              : snapshot.averageProcessingSeconds.toFixed(1).replace(".", ",")
           }
+          unit={snapshot.averageProcessingSeconds === null ? undefined : "s"}
           meta="somente pedidos finalizados"
         />
         <StatTile
@@ -92,28 +101,59 @@ export function DashboardView({ initial }: { initial: DashboardSnapshot | null }
               : undefined
           }
         />
+      </Cluster>
+
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]">
+        <Panel>
+          <PanelHeader title="Pedidos criados" meta={`uma coluna por ${activeWindow.bucket}`}>
+            <div
+              className="flex overflow-hidden rounded border border-border"
+              role="group"
+              aria-label="Janela de tempo"
+            >
+              {WINDOWS.map((option) => (
+                <button
+                  key={option.hours}
+                  type="button"
+                  onClick={() => setWindowHours(option.hours)}
+                  aria-pressed={option.hours === windowHours}
+                  className={cn(
+                    "px-2.5 py-1 text-xs transition-colors not-first:border-l not-first:border-border",
+                    option.hours === windowHours
+                      ? "bg-foreground font-medium text-background"
+                      : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                  )}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </PanelHeader>
+          <PanelBody>
+            <ThroughputChart data={snapshot.throughput} />
+          </PanelBody>
+        </Panel>
+
+        <Panel className="flex flex-col">
+          <PanelHeader
+            title="Distribuição por status"
+            meta="todos os pedidos, não só a janela acima"
+          />
+          <PanelBody className="flex-1">
+            <StatusDistribution slices={snapshot.statusBreakdown} />
+          </PanelBody>
+        </Panel>
       </div>
 
       <section className="space-y-3">
-        <h2 className="text-sm font-medium">Pedidos criados</h2>
-        <div className="rounded-lg border bg-card p-4">
-          <ThroughputChart
-            data={snapshot.throughput}
-            windowHours={windowHours}
-            onWindowChange={setWindowHours}
-          />
+        <div className="flex items-baseline justify-between gap-4 border-b pb-2">
+          <h2 className="font-condensed text-base leading-none font-semibold tracking-tight">
+            Em andamento agora
+          </h2>
+          <span className="figure text-xs text-muted-foreground">
+            {snapshot.inFlightOrders.length}
+          </span>
         </div>
-      </section>
-
-      <section className="space-y-3">
-        <h2 className="text-sm font-medium">Distribuição por status</h2>
-        <div className="rounded-lg border bg-card p-4">
-          <StatusDistribution slices={snapshot.statusBreakdown} />
-        </div>
-      </section>
-
-      <section className="space-y-3">
-        <h2 className="text-sm font-medium">Em andamento agora</h2>
         <ProcessingBoard orders={snapshot.inFlightOrders} />
       </section>
     </div>

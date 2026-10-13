@@ -5,8 +5,7 @@ import { fetchOrderById } from "@/lib/api";
 import type { OrderDetail } from "@/types/order";
 import { cn } from "@/lib/utils";
 import { LocalDateTime } from "@/components/LocalDateTime";
-import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { Panel } from "@/components/ui/panel";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
 import { OrderStatusHistoryTimeline } from "@/components/orders/OrderStatusHistoryTimeline";
 import { RealtimeIndicator } from "@/components/orders/RealtimeIndicator";
@@ -42,48 +41,53 @@ export function OrderDetailView({ initialOrder }: { initialOrder: OrderDetail })
 
   return (
     <div className="space-y-6">
-      <Card className={cn("transition-shadow", justUpdated && "ring-2 ring-primary/40")}>
-        <CardContent className="space-y-5">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="min-w-0">
-              <h1 className="truncate text-xl font-semibold tracking-tight">{order.product}</h1>
-              <p className="truncate text-sm text-muted-foreground">{order.customer}</p>
-            </div>
-            <OrderStatusBadge status={order.status} />
+      <Panel
+        className={cn(
+          "overflow-hidden transition-shadow",
+          justUpdated && "ring-2 ring-foreground/25"
+        )}
+      >
+        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border px-4 py-3.5">
+          <div className="min-w-0">
+            <h1 className="font-condensed truncate text-xl leading-tight font-semibold tracking-tight">
+              {order.product}
+            </h1>
+            <p className="truncate text-sm text-muted-foreground">{order.customer}</p>
           </div>
+          <OrderStatusBadge status={order.status} />
+        </div>
 
-          <Separator />
-
-          <dl className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            <div>
-              <dt className="text-xs text-muted-foreground">Valor</dt>
-              <dd className="tabular mt-1 font-mono text-lg">{currency.format(order.amount)}</dd>
-            </div>
-            <div>
-              <dt className="text-xs text-muted-foreground">Criado em</dt>
-              <dd className="tabular mt-1 font-mono text-sm">
-                <LocalDateTime value={order.createdAt} format="long" />
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs text-muted-foreground">Processamento</dt>
-              <dd className="tabular mt-1 font-mono text-sm">
-                {order.processingSeconds}s · {order.outcome}
-              </dd>
-            </div>
-            <div className="min-w-0">
-              <dt className="text-xs text-muted-foreground">Identificador</dt>
-              <dd className="mt-1 truncate font-mono text-sm text-muted-foreground" title={order.id}>
-                {order.id}
-              </dd>
-            </div>
-          </dl>
-        </CardContent>
-      </Card>
+        <dl className="grid grid-cols-1 gap-px bg-border sm:grid-cols-2 lg:grid-cols-4">
+          <div className="bg-card px-4 py-3">
+            <dt className="label">Valor</dt>
+            <dd className="figure mt-1 text-lg leading-none">{currency.format(order.amount)}</dd>
+          </div>
+          <div className="bg-card px-4 py-3">
+            <dt className="label">Criado em</dt>
+            <dd className="figure mt-1 text-sm">
+              <LocalDateTime value={order.createdAt} format="long" />
+            </dd>
+          </div>
+          <div className="bg-card px-4 py-3">
+            <dt className="label">Processamento</dt>
+            <dd className="figure mt-1 text-sm">
+              {order.processingSeconds}s · {order.outcome}
+            </dd>
+          </div>
+          <div className="min-w-0 bg-card px-4 py-3">
+            <dt className="label">Identificador</dt>
+            <dd className="mt-1 truncate font-mono text-sm text-muted-foreground" title={order.id}>
+              {order.id}
+            </dd>
+          </div>
+        </dl>
+      </Panel>
 
       <section className="space-y-4">
-        <div className="flex items-baseline justify-between gap-4">
-          <h2 className="text-sm font-medium">Percurso do pedido</h2>
+        <div className="flex items-baseline justify-between gap-4 border-b pb-2">
+          <h2 className="font-condensed text-base leading-none font-semibold tracking-tight">
+            Percurso do pedido
+          </h2>
           <RealtimeIndicator mode={mode} />
         </div>
         <OrderStatusHistoryTimeline history={order.history} status={order.status} />

@@ -31,7 +31,7 @@ export function ProcessingCard({ order, now }: { order: Order; now: number }) {
   return (
     <Link
       href={`/orders/${order.id}`}
-      className="block rounded-lg border bg-card p-4 transition-colors hover:border-primary/40"
+      className="block rounded border border-border bg-card p-4 transition-colors outline-none hover:border-foreground/35 focus-visible:border-foreground/35 focus-visible:ring-2 focus-visible:ring-ring/40"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -46,7 +46,7 @@ export function ProcessingCard({ order, now }: { order: Order; now: number }) {
 
       <div className="mt-4 space-y-1.5">
         <div
-          className="h-1.5 overflow-hidden rounded-full bg-muted"
+          className="channel h-2 overflow-hidden rounded-[2px]"
           role="progressbar"
           aria-valuemin={0}
           aria-valuemax={100}
@@ -55,7 +55,7 @@ export function ProcessingCard({ order, now }: { order: Order; now: number }) {
         >
           {isProcessing ? (
             <div
-              className="h-full rounded-full bg-stage-processing transition-[width] duration-100 ease-linear"
+              className="h-full bg-stage-processing transition-[width] duration-100 ease-linear"
               style={{ width: `${progress}%` }}
             />
           ) : (
@@ -66,15 +66,15 @@ export function ProcessingCard({ order, now }: { order: Order; now: number }) {
         </div>
 
         <div className="flex items-baseline justify-between gap-2 text-xs">
-          <span className="tabular font-mono text-muted-foreground">
+          <span className="figure text-muted-foreground">
             {isProcessing ? `${seconds(elapsed)} / ${seconds(total)}` : `aguardando o worker · ${seconds(total)}`}
           </span>
           {overdue && <span className="text-stage-cancelled">além do previsto</span>}
         </div>
       </div>
 
-      <div className="mt-4 flex items-baseline justify-between gap-3 border-t pt-3">
-        <span className="tabular font-mono text-sm">{currency.format(order.amount)}</span>
+      <div className="mt-4 flex items-baseline justify-between gap-3 border-t border-border pt-3">
+        <span className="figure text-sm">{currency.format(order.amount)}</span>
         <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
           termina em
           <StageMark status={planned} className="size-2.5" />

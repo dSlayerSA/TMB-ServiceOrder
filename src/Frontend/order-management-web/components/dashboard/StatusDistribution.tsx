@@ -22,7 +22,7 @@ export function StatusDistribution({ slices }: { slices: StatusSlice[] }) {
 
   if (total === 0) {
     return (
-      <p className="rounded-lg border border-dashed px-4 py-6 text-center text-sm text-muted-foreground">
+      <p className="rounded border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
         Nenhum pedido ainda.
       </p>
     );
@@ -32,9 +32,9 @@ export function StatusDistribution({ slices }: { slices: StatusSlice[] }) {
     ((byStatus.get(status)?.count ?? 0) / total) * 100;
 
   return (
-    <div className="space-y-4">
+    <div className="flex h-full flex-col gap-4">
       <div
-        className="flex h-2.5 gap-0.5 overflow-hidden rounded-full bg-muted"
+        className="channel flex h-3 gap-0.5 overflow-hidden rounded-[2px]"
         role="img"
         aria-label={present
           .map((s) => `${byStatus.get(s)!.count} ${s} (${share(s).toFixed(0)}%)`)
@@ -43,25 +43,25 @@ export function StatusDistribution({ slices }: { slices: StatusSlice[] }) {
         {present.map((status) => (
           <div
             key={status}
-            className={cn("h-full first:rounded-l-full last:rounded-r-full", STAGE_BG[status])}
+            className={cn("h-full", STAGE_BG[status])}
             style={{ width: `${share(status)}%` }}
           />
         ))}
       </div>
 
-      <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
+      <dl className="grid flex-1 content-between gap-x-6 gap-y-2.5 border-t border-border pt-3">
         {ALL_STATUSES.map((status) => {
           const slice = byStatus.get(status);
           const count = slice?.count ?? 0;
           return (
             <div key={status} className="flex items-baseline justify-between gap-3">
-              <dt className="flex items-center gap-2 text-sm text-muted-foreground">
+              <dt className="flex items-center gap-2 truncate text-sm text-muted-foreground">
                 <StageMark status={status} />
                 {status}
               </dt>
               <dd className="flex items-baseline gap-3">
-                <span className="tabular font-mono text-sm text-foreground">{count}</span>
-                <span className="tabular w-20 text-right font-mono text-xs text-muted-foreground">
+                <span className="figure text-sm text-foreground">{count}</span>
+                <span className="figure w-20 text-right text-xs text-muted-foreground">
                   {currency.format(slice?.totalAmount ?? 0)}
                 </span>
               </dd>

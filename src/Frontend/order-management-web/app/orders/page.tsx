@@ -9,7 +9,7 @@ export default async function OrdersPage() {
   const initial = await fetchOrders({ page: 1, pageSize: 20 }).catch(() => EMPTY);
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-5 py-8 sm:px-8 sm:py-10">
+    <div className="mx-auto w-full max-w-6xl px-5 py-6 sm:px-8 sm:py-8">
       <OrdersTable initial={initial} />
     </div>
   );
