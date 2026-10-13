@@ -1,9 +1,9 @@
 import { cn } from "@/lib/utils";
 
 /**
- * One reading in the cluster. Deliberately not a chart: a single current value
- * reads faster as a figure than as a one-bar chart, and the figure is where
- * this page spends all of its weight.
+ * One reading, on its own plate. Deliberately not a chart: a single current
+ * value reads faster as a figure than as a one-bar chart, and the figure is
+ * where this page spends all of its weight.
  */
 export function StatTile({
   label,
@@ -23,16 +23,21 @@ export function StatTile({
   className?: string;
 }) {
   return (
-    <div className={cn("flex min-w-0 flex-col justify-between gap-3 bg-card px-4 py-3.5", className)}>
+    <div
+      className={cn(
+        "surface flex min-w-0 flex-col justify-between gap-4 rounded-lg border border-border bg-card px-5 py-4",
+        className
+      )}
+    >
       <p className="label truncate">{label}</p>
       <div>
         <p className="flex items-baseline gap-1">
-          <span className={cn("figure text-[1.6rem] leading-none", accent ?? "text-foreground")}>
+          <span className={cn("figure text-[1.75rem] leading-none", accent ?? "text-foreground")}>
             {value}
           </span>
           {unit && <span className="text-sm text-muted-foreground">{unit}</span>}
         </p>
-        {meta && <p className="mt-1.5 truncate text-xs text-muted-foreground">{meta}</p>}
+        {meta && <p className="mt-2 truncate text-xs text-muted-foreground">{meta}</p>}
       </div>
     </div>
   );

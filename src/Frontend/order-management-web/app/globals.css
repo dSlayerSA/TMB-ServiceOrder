@@ -60,19 +60,20 @@
   --color-stage-failed: var(--stage-failed);
   --color-stage-cancelled: var(--stage-cancelled);
 
-  /* Radius by role, not one value stamped on everything: controls are touched,
-   * surfaces are not, and table cells are part of a grid. */
-  --radius-sm: 2px;
-  --radius-md: 3px;
-  --radius-lg: 4px;
-  --radius-xl: 6px;
-  --radius-2xl: 8px;
-  --radius-3xl: 10px;
-  --radius-4xl: 12px;
+  /* Radius by role, not one value stamped on everything: a control is a thing
+   * you touch and reads softer, a surface is a plate and reads firmer, and a
+   * table cell is part of a grid and has no corner at all. */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
+  --radius-2xl: 12px;
+  --radius-3xl: 14px;
+  --radius-4xl: 16px;
 }
 
 :root {
-  --radius: 4px;
+  --radius: 8px;
 
   /* Warm-neutral greys: machined metal rather than the cool blue-grey that
    * reads as a technology template. */
@@ -99,6 +100,9 @@
   /* Spelled as a plain rgba rather than a color-mix: the minifier collapses a
    * color-mix in box-shadow position down to the opaque colour. */
   --channel-edge: rgb(0 0 0 / 0.08);
+  /* Just enough to lift a plate off the paper. The dialog gets a real shadow;
+   * everything else gets this and the hairline. */
+  --shadow-surface: 0 1px 2px rgb(23 22 26 / 0.05), 0 1px 1px rgb(23 22 26 / 0.03);
 
   /* Validated with the dataviz palette script. Pendente fails the chroma floor
    * on purpose - it is a neutral slot, carried by the ring shape and the label. */
@@ -147,6 +151,7 @@
   --input: #38363f;
   --ring: #8a8790;
   --channel-edge: rgb(0 0 0 / 0.45);
+  --shadow-surface: 0 1px 2px rgb(0 0 0 / 0.4), 0 1px 1px rgb(0 0 0 / 0.25);
 
   --stage-pending: #9d9aa3;
   --stage-processing: #5b9bff;
@@ -202,6 +207,10 @@
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.03em;
   font-weight: 500;
+}
+
+.surface {
+  box-shadow: var(--shadow-surface);
 }
 
 /* A recessed channel, the way a gauge is cut into a panel, instead of a

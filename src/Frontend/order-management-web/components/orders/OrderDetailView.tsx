@@ -40,7 +40,7 @@ export function OrderDetailView({ initialOrder }: { initialOrder: OrderDetail })
   const mode = useOrderRealtime(order.id, refresh);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <Panel
         className={cn(
           "overflow-hidden transition-shadow",
@@ -83,8 +83,8 @@ export function OrderDetailView({ initialOrder }: { initialOrder: OrderDetail })
         </dl>
       </Panel>
 
-      <section className="space-y-4">
-        <div className="flex items-baseline justify-between gap-4 border-b pb-2">
+      <section className="space-y-5">
+        <div className="flex items-baseline justify-between gap-4 border-b pb-3">
           <h2 className="font-condensed text-base leading-none font-semibold tracking-tight">
             Percurso do pedido
           </h2>

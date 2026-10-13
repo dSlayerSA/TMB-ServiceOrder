@@ -43,7 +43,7 @@ export function DashboardView({ initial }: { initial: DashboardSnapshot | null }
 
   if (!snapshot) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-8">
         <PageHeader title="Painel" />
         <EmptyNote
           title="O painel não carregou"
@@ -60,7 +60,7 @@ export function DashboardView({ initial }: { initial: DashboardSnapshot | null }
   const activeWindow = WINDOWS.find((w) => w.hours === windowHours) ?? WINDOWS[2];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader
         title="Painel"
         description="O estado do pipeline agora, e como os pedidos vêm terminando."
@@ -103,11 +103,11 @@ export function DashboardView({ initial }: { initial: DashboardSnapshot | null }
         />
       </Cluster>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]">
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]">
         <Panel>
           <PanelHeader title="Pedidos criados" meta={`uma coluna por ${activeWindow.bucket}`}>
             <div
-              className="flex overflow-hidden rounded border border-border"
+              className="surface flex overflow-hidden rounded-lg border border-border bg-card"
               role="group"
               aria-label="Janela de tempo"
             >
@@ -118,7 +118,7 @@ export function DashboardView({ initial }: { initial: DashboardSnapshot | null }
                   onClick={() => setWindowHours(option.hours)}
                   aria-pressed={option.hours === windowHours}
                   className={cn(
-                    "px-2.5 py-1 text-xs transition-colors not-first:border-l not-first:border-border",
+                    "px-3 py-1.5 text-xs transition-colors not-first:border-l not-first:border-border",
                     option.hours === windowHours
                       ? "bg-foreground font-medium text-background"
                       : "text-muted-foreground hover:bg-accent hover:text-foreground"
@@ -145,8 +145,8 @@ export function DashboardView({ initial }: { initial: DashboardSnapshot | null }
         </Panel>
       </div>
 
-      <section className="space-y-3">
-        <div className="flex items-baseline justify-between gap-4 border-b pb-2">
+      <section className="space-y-4">
+        <div className="flex items-baseline justify-between gap-4 border-b pb-3">
           <h2 className="font-condensed text-base leading-none font-semibold tracking-tight">
             Em andamento agora
           </h2>

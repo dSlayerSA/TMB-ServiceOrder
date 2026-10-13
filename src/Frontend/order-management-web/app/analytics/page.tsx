@@ -14,7 +14,7 @@ export default async function AnalyticsPage() {
 
   return (
     <div className="mx-auto w-full max-w-2xl px-5 py-6 sm:px-8 sm:py-8">
-      <div className="space-y-6">
+      <div className="space-y-8">
         <PageHeader
           title="Perguntar"
           description="Perguntas em linguagem natural, respondidas com os dados reais do banco."

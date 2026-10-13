@@ -172,10 +172,10 @@ export function NewOrderDialog({ onCreated }: { onCreated: () => void }) {
 
             {/* The worker settings are a recessed group: this is the part of the
                 form that exists to exercise the system, not to describe a sale. */}
-            <fieldset className="channel space-y-3 rounded border border-border p-3">
+            <fieldset className="channel space-y-4 rounded-lg border border-border p-4">
               <legend className="label px-1">Cenário do worker</legend>
 
-              <div className="flex flex-wrap gap-1.5" role="group" aria-label="Cenários prontos">
+              <div className="flex flex-wrap gap-2" role="group" aria-label="Cenários prontos">
                 {SCENARIOS.map((scenario) => {
                   const active = scenario.seconds === seconds && scenario.outcome === outcome;
                   return (
@@ -188,7 +188,7 @@ export function NewOrderDialog({ onCreated }: { onCreated: () => void }) {
                       }}
                       aria-pressed={active}
                       className={cn(
-                        "rounded border px-2.5 py-1 text-xs transition-colors",
+                        "rounded-md border px-3 py-1.5 text-xs transition-colors",
                         active
                           ? "border-foreground bg-foreground font-medium text-background"
                           : "border-border bg-card text-muted-foreground hover:border-foreground/40 hover:text-foreground"

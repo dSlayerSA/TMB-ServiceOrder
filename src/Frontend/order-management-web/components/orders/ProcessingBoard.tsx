@@ -26,7 +26,7 @@ export function ProcessingBoard({ orders }: { orders: Order[] }) {
   }
 
   return (
-    <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+    <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
       {inFlight.map((order) => (
         <li key={order.id}>
           <ProcessingCard order={order} now={now} />

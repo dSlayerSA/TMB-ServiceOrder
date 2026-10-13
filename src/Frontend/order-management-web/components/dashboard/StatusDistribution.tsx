@@ -22,7 +22,7 @@ export function StatusDistribution({ slices }: { slices: StatusSlice[] }) {
 
   if (total === 0) {
     return (
-      <p className="rounded border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
+      <p className="rounded-lg border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
         Nenhum pedido ainda.
       </p>
     );
@@ -34,7 +34,7 @@ export function StatusDistribution({ slices }: { slices: StatusSlice[] }) {
   return (
     <div className="flex h-full flex-col gap-4">
       <div
-        className="channel flex h-3 gap-0.5 overflow-hidden rounded-[2px]"
+        className="channel flex h-3 gap-0.5 overflow-hidden rounded-full"
         role="img"
         aria-label={present
           .map((s) => `${byStatus.get(s)!.count} ${s} (${share(s).toFixed(0)}%)`)
@@ -43,7 +43,7 @@ export function StatusDistribution({ slices }: { slices: StatusSlice[] }) {
         {present.map((status) => (
           <div
             key={status}
-            className={cn("h-full", STAGE_BG[status])}
+            className={cn("h-full first:rounded-l-full last:rounded-r-full", STAGE_BG[status])}
             style={{ width: `${share(status)}%` }}
           />
         ))}

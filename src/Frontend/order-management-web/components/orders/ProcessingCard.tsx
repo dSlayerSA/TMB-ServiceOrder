@@ -31,7 +31,7 @@ export function ProcessingCard({ order, now }: { order: Order; now: number }) {
   return (
     <Link
       href={`/orders/${order.id}`}
-      className="block rounded border border-border bg-card p-4 transition-colors outline-none hover:border-foreground/35 focus-visible:border-foreground/35 focus-visible:ring-2 focus-visible:ring-ring/40"
+      className="surface block rounded-lg border border-border bg-card p-5 transition-colors outline-none hover:border-foreground/35 focus-visible:border-foreground/35 focus-visible:ring-2 focus-visible:ring-ring/40"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -46,7 +46,7 @@ export function ProcessingCard({ order, now }: { order: Order; now: number }) {
 
       <div className="mt-4 space-y-1.5">
         <div
-          className="channel h-2 overflow-hidden rounded-[2px]"
+          className="channel h-2 overflow-hidden rounded-full"
           role="progressbar"
           aria-valuemin={0}
           aria-valuemax={100}
@@ -55,7 +55,7 @@ export function ProcessingCard({ order, now }: { order: Order; now: number }) {
         >
           {isProcessing ? (
             <div
-              className="h-full bg-stage-processing transition-[width] duration-100 ease-linear"
+              className="h-full rounded-full bg-stage-processing transition-[width] duration-100 ease-linear"
               style={{ width: `${progress}%` }}
             />
           ) : (

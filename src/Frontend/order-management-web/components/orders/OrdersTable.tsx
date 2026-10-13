@@ -156,7 +156,7 @@ export function OrdersTable({ initial }: { initial: Paged<Order> }) {
     ({ "--settle-tint": STAGE_VAR[order.status] }) as React.CSSProperties;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader
         title="Pedidos"
         description="Cada pedido percorre o pipeline sozinho, movido pelo worker."
@@ -168,9 +168,9 @@ export function OrdersTable({ initial }: { initial: Paged<Order> }) {
       {/* Filters, rows and paging are one instrument rather than three stacked
           blocks: the controls belong to the table they act on. */}
       <Panel className="overflow-hidden">
-        <div className="flex flex-wrap items-center gap-2 border-b border-border bg-muted/40 px-3 py-2.5">
+        <div className="flex flex-wrap items-center gap-2.5 border-b border-border bg-muted/40 px-4 py-3">
           <div className="relative min-w-48 flex-1">
-            <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Search className="pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={searchInput}
               onChange={(event) => {
@@ -179,7 +179,7 @@ export function OrdersTable({ initial }: { initial: Paged<Order> }) {
               }}
               placeholder="Buscar por cliente ou produto"
               aria-label="Buscar pedidos"
-              className="bg-card pl-8"
+              className="bg-card pl-9"
             />
           </div>
 
@@ -349,7 +349,7 @@ export function OrdersTable({ initial }: { initial: Paged<Order> }) {
             </ul>
 
             <nav
-              className="flex flex-wrap items-center justify-between gap-3 border-t border-border bg-muted/40 px-3 py-2.5"
+              className="flex flex-wrap items-center justify-between gap-3 border-t border-border bg-muted/40 px-4 py-3"
               aria-label="Paginação dos pedidos"
             >
               <p className="text-xs text-muted-foreground">
@@ -371,7 +371,7 @@ export function OrdersTable({ initial }: { initial: Paged<Order> }) {
                     setPageNumber(1);
                   }}
                 >
-                  <SelectTrigger aria-label="Itens por página" className="w-32 bg-card">
+                  <SelectTrigger aria-label="Itens por página" className="w-36 bg-card">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -383,17 +383,17 @@ export function OrdersTable({ initial }: { initial: Paged<Order> }) {
                   </SelectContent>
                 </Select>
 
-                <div className="flex overflow-hidden rounded border border-border bg-card">
+                <div className="surface flex overflow-hidden rounded-lg border border-border bg-card">
                   <button
                     type="button"
                     disabled={page.page <= 1}
                     onClick={() => setPageNumber((n) => Math.max(1, n - 1))}
                     aria-label="Página anterior"
-                    className="px-2 py-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
+                    className="px-2.5 py-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
                   >
                     <ChevronLeft className="size-4" />
                   </button>
-                  <span className="figure border-x border-border px-2.5 py-1.5 text-xs text-muted-foreground">
+                  <span className="figure border-x border-border px-3 py-2 text-xs text-muted-foreground">
                     {page.page} / {page.totalPages}
                   </span>
                   <button
@@ -401,7 +401,7 @@ export function OrdersTable({ initial }: { initial: Paged<Order> }) {
                     disabled={page.page >= page.totalPages}
                     onClick={() => setPageNumber((n) => n + 1)}
                     aria-label="Próxima página"
-                    className="px-2 py-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
+                    className="px-2.5 py-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
                   >
                     <ChevronRight className="size-4" />
                   </button>

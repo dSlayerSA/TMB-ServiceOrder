@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 export function Panel({ className, ...props }: React.ComponentProps<"section">) {
   return (
     <section
-      className={cn("rounded-md border border-border bg-card", className)}
+      className={cn("surface rounded-lg border border-border bg-card", className)}
       {...props}
     />
   );
@@ -31,7 +31,7 @@ export function PanelHeader({
   return (
     <div
       className={cn(
-        "flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-border px-4 py-2.5",
+        "flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-border px-5 py-3.5",
         className
       )}
     >
@@ -47,24 +47,12 @@ export function PanelHeader({
 }
 
 export function PanelBody({ className, ...props }: React.ComponentProps<"div">) {
-  return <div className={cn("p-4", className)} {...props} />;
+  return <div className={cn("p-5", className)} {...props} />;
 }
 
-/**
- * A row of readings divided by hairlines, instead of a row of separate cards.
- * The gap is the rule: a 1px gap over a border-coloured ground puts a line
- * exactly between cells and never around the outside, at any column count.
- */
+/** A row of readings, each its own plate, with room to breathe between them. */
 export function Cluster({ className, ...props }: React.ComponentProps<"div">) {
-  return (
-    <div
-      className={cn(
-        "grid grid-cols-1 gap-px overflow-hidden rounded-md border border-border bg-border sm:grid-cols-2",
-        className
-      )}
-      {...props}
-    />
-  );
+  return <div className={cn("grid grid-cols-1 gap-4 sm:grid-cols-2", className)} {...props} />;
 }
 
 /** Empty state. Dashed, never a panel: there is nothing to frame yet. */
@@ -80,7 +68,7 @@ export function EmptyNote({
   return (
     <div
       className={cn(
-        "rounded-md border border-dashed border-border px-4 py-10 text-center",
+        "rounded-lg border border-dashed border-border px-5 py-12 text-center",
         className
       )}
     >

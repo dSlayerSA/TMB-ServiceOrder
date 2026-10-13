@@ -62,7 +62,7 @@ export function AnalyticsChat() {
                 key={suggestion}
                 type="button"
                 onClick={() => ask(suggestion)}
-                className="rounded border border-border bg-card px-3 py-2 text-left text-sm transition-colors hover:border-foreground/35 hover:bg-accent/50"
+                className="surface rounded-lg border border-border bg-card px-4 py-2.5 text-left text-sm transition-colors hover:border-foreground/35 hover:bg-accent/50"
               >
                 {suggestion}
               </button>
@@ -77,7 +77,7 @@ export function AnalyticsChat() {
               className={cn(
                 "max-w-[85%] text-sm",
                 turn.role === "user"
-                  ? "ml-auto rounded bg-primary px-3 py-2 text-primary-foreground"
+                  ? "ml-auto rounded-lg bg-primary px-3.5 py-2 text-primary-foreground"
                   : "mr-auto whitespace-pre-wrap leading-relaxed"
               )}
             >
