@@ -18,6 +18,9 @@ npm-debug.log*
 # Docker
 docker-compose.override.local.yml
 
+# Golden tests: snapshot candidates from a failed run, not committed.
+*.received.json
+
 # OS
 .DS_Store
 Thumbs.db

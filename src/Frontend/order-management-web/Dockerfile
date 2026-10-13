@@ -19,6 +19,11 @@ FROM node:22-alpine AS final
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
+# Next.js standalone server.js binds to process.env.HOSTNAME, and Docker sets
+# HOSTNAME to the container id - which makes the server listen only on the
+# container's external interface, so loopback (and therefore the container
+# healthcheck) is refused. Bind all interfaces instead.
+ENV HOSTNAME=0.0.0.0
 
 COPY --from=build /app/public ./public
 COPY --from=build /app/.next/standalone ./
