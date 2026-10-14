@@ -61,6 +61,16 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
   return handleResponse<Order>(response);
 }
 
+/**
+ * Cancels an order that has not settled yet - including one still Pendente,
+ * which the worker has not picked up. A 409 means it already reached a terminal
+ * status, which is a state conflict rather than a failure.
+ */
+export async function cancelOrder(id: string): Promise<OrderDetail> {
+  const response = await fetch(`${API_URL}/orders/${id}/cancel`, { method: "POST" });
+  return handleResponse<OrderDetail>(response);
+}
+
 export async function fetchProducts(): Promise<Product[]> {
   const response = await fetch(`${API_URL}/products`, { cache: "no-store" });
   return handleResponse<Product[]>(response);

@@ -6,6 +6,8 @@ import type { OrderDetail } from "@/types/order";
 import { cn } from "@/lib/utils";
 import { LocalDateTime } from "@/components/LocalDateTime";
 import { Panel } from "@/components/ui/panel";
+import { CancelOrderButton } from "@/components/orders/CancelOrderButton";
+import { isTerminal } from "@/components/orders/StageMark";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
 import { OrderStatusHistoryTimeline } from "@/components/orders/OrderStatusHistoryTimeline";
 import { RealtimeIndicator } from "@/components/orders/RealtimeIndicator";
@@ -54,7 +56,12 @@ export function OrderDetailView({ initialOrder }: { initialOrder: OrderDetail })
             </h1>
             <p className="truncate text-sm text-muted-foreground">{order.customer}</p>
           </div>
-          <OrderStatusBadge status={order.status} />
+          <div className="flex shrink-0 flex-col items-end gap-2.5">
+            <OrderStatusBadge status={order.status} />
+            {!isTerminal(order.status) && (
+              <CancelOrderButton order={order} onCancelled={setOrder} />
+            )}
+          </div>
         </div>
 
         <dl className="grid grid-cols-1 gap-px bg-border sm:grid-cols-2 lg:grid-cols-4">
