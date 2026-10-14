@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutDashboard, MessagesSquare, PackageSearch } from "lucide-react";
@@ -12,23 +13,6 @@ const NAV = [
   { href: "/analytics", label: "Perguntar", icon: MessagesSquare },
 ];
 
-/**
- * The three marks of the pipeline - waiting, in flight, settled - used as the
- * identity. Same vocabulary as the status marks in the tables, so the logo
- * teaches the notation the rest of the interface uses.
- */
-function PipelineMark() {
-  return (
-    <svg viewBox="0 0 30 12" aria-hidden="true" className="h-3 w-[30px] text-foreground">
-      <path d="M6 6 H24" stroke="currentColor" strokeWidth="1" opacity="0.3" />
-      <circle cx="6" cy="6" r="3.5" fill="var(--background)" stroke="currentColor" strokeWidth="1.5" />
-      <circle cx="15" cy="6" r="3.5" fill="var(--background)" stroke="currentColor" strokeWidth="1.5" />
-      <circle cx="15" cy="6" r="1.5" fill="currentColor" />
-      <circle cx="24" cy="6" r="3.5" fill="currentColor" />
-    </svg>
-  );
-}
-
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isActive = (href: string) =>
@@ -39,9 +23,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <header className="sticky top-0 z-30 flex shrink-0 items-center gap-4 border-b border-sidebar-border bg-sidebar px-4 py-2.5 md:static md:w-56 md:flex-col md:items-stretch md:gap-0 md:border-r md:border-b-0 md:px-0 md:py-0">
         <Link
           href="/"
-          className="flex items-center gap-2.5 outline-none focus-visible:ring-2 focus-visible:ring-ring md:h-14 md:shrink-0 md:border-b md:border-sidebar-border md:px-4"
+          className="flex items-center gap-3 outline-none focus-visible:ring-2 focus-visible:ring-ring md:h-auto md:shrink-0 md:flex-col md:items-start md:gap-1.5 md:border-b md:border-sidebar-border md:px-4 md:py-4"
         >
-          <PipelineMark />
+          {/* The mark ships as pure white on transparent, so light mode inverts
+            * it to pure black rather than shipping a second file. */}
+          <Image
+            src="/tmb.webp"
+            alt="TMB"
+            width={105}
+            height={48}
+            priority
+            className="h-[22px] w-auto invert dark:invert-0"
+          />
           <span className="font-condensed text-[0.9rem] leading-none font-semibold tracking-tight text-sidebar-foreground">
             Gestão de Pedidos
           </span>
