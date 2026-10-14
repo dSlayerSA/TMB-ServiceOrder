@@ -13,4 +13,11 @@ public interface IOrderService
 
     Task<PagedResult<Order>> SearchAsync(OrderQuery query, CancellationToken ct = default);
     Task<Order> GetByIdAsync(Guid id, CancellationToken ct = default);
+
+    /// <summary>
+    /// Cancels an order that has not settled yet - including one the worker has
+    /// not picked up. Throws <see cref="OrderNotCancellableException"/> if it has
+    /// already reached a terminal status.
+    /// </summary>
+    Task<Order> CancelAsync(Guid id, CancellationToken ct = default);
 }

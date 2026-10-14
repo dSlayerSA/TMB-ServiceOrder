@@ -60,6 +60,38 @@ public class OrdersController : ControllerBase
             page.TotalPages));
     }
 
+    /// <summary>
+    /// Cancels an order that has not settled yet. Works while it is still
+    /// Pendente - that is, before the worker has even picked it up.
+    /// </summary>
+    [HttpPost("{id:guid}/cancel")]
+    [ProducesResponseType(typeof(OrderDetailResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> Cancel(Guid id, CancellationToken ct)
+    {
+        try
+        {
+            var order = await _orderService.CancelAsync(id, ct);
+            return Ok(OrderDetailResponse.FromDomain(order));
+        }
+        catch (OrderNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (OrderNotCancellableException ex)
+        {
+            // The order exists, the request is well formed - it is the current
+            // state that refuses, which is what 409 is for.
+            return Conflict(new ProblemDetails
+            {
+                Status = StatusCodes.Status409Conflict,
+                Title = "Pedido já encerrado",
+                Detail = ex.Message,
+            });
+        }
+    }
+
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(OrderDetailResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

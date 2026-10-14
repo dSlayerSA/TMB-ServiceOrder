@@ -250,4 +250,50 @@ public class OrdersApiTests : IClassFixture<CustomWebApplicationFactory>
             p.Total == p.Pendente + p.Processando + p.Finalizado + p.Falhou + p.Cancelado);
         snapshot.Throughput.Sum(p => p.Total).Should().BeGreaterThan(0);
     }
+
+    /// <summary>
+    /// The worker never runs in these tests (the broker host is unreachable on
+    /// purpose), so the order is still Pendente - which is exactly the case this
+    /// endpoint exists for.
+    /// </summary>
+    [Fact]
+    public async Task PostCancel_CancelsAnOrderStillWaitingForTheWorker()
+    {
+        var notebook = await Catalogue.GetAsync(_client, Catalogue.Notebook);
+        var create = await _client.PostAsJsonAsync(
+            "/orders", new CreateOrderRequest("Ana Prado", notebook.Id));
+        var created = await create.Content.ReadFromJsonAsync<OrderResponse>();
+        created!.Status.Should().Be("Pendente");
+
+        var response = await _client.PostAsync($"/orders/{created.Id}/cancel", null);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var detail = await response.Content.ReadFromJsonAsync<OrderDetailResponse>();
+        detail!.Status.Should().Be("Cancelado");
+        detail.History.Should().Contain(h => h.Status == "Cancelado");
+    }
+
+    [Fact]
+    public async Task PostCancel_IsRefusedOnceTheOrderHasSettled()
+    {
+        var notebook = await Catalogue.GetAsync(_client, Catalogue.Notebook);
+        var create = await _client.PostAsJsonAsync(
+            "/orders", new CreateOrderRequest("Bruno Dias", notebook.Id));
+        var created = await create.Content.ReadFromJsonAsync<OrderResponse>();
+
+        var first = await _client.PostAsync($"/orders/{created!.Id}/cancel", null);
+        first.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        // Cancelado is terminal, so the second attempt is a state conflict.
+        var second = await _client.PostAsync($"/orders/{created.Id}/cancel", null);
+        second.StatusCode.Should().Be(HttpStatusCode.Conflict);
+    }
+
+    [Fact]
+    public async Task PostCancel_ReturnsNotFoundForAnUnknownOrder()
+    {
+        var response = await _client.PostAsync($"/orders/{Guid.NewGuid()}/cancel", null);
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
 }

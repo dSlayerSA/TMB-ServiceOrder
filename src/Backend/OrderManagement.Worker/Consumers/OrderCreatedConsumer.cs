@@ -114,6 +114,22 @@ public class OrderCreatedConsumer : BackgroundService
                 return;
             }
 
+            // The order may have been cancelled while this message sat in the
+            // queue. Terminal is terminal: there is nothing to do, and trying to
+            // move it would throw and send the message round the queue forever.
+            if (order.IsTerminal)
+            {
+                _logger.LogInformation(
+                    "Order {OrderId} is already {Status}; nothing to process.", order.Id, order.Status);
+
+                if (messageId != Guid.Empty)
+                    db.ProcessedMessages.Add(new ProcessedMessage(messageId));
+
+                await db.SaveChangesAsync(stoppingToken);
+                await channel.BasicAckAsync(ea.DeliveryTag, multiple: false, stoppingToken);
+                return;
+            }
+
             var newHistory = order.TransitionTo(OrderStatus.Processando, "Processamento iniciado pelo worker.");
             if (newHistory is not null)
                 db.Entry(newHistory).State = EntityState.Added;
@@ -174,6 +190,15 @@ public class OrderCreatedConsumer : BackgroundService
         var order = await db.Orders.Include(o => o.StatusHistories).FirstOrDefaultAsync(o => o.Id == orderId, appStoppingToken);
         if (order is null)
             return;
+
+        // Cancelled while we were waiting out the plan. This runs on a detached
+        // task, so an exception here would go unobserved - the guard is the only
+        // thing standing between a cancellation and a silent crash.
+        if (order.IsTerminal)
+        {
+            activity?.SetTag("order.status", order.Status.ToString());
+            return;
+        }
 
         var ending = order.Plan.FinalStatus;
         activity?.SetTag("order.status", ending.ToString());

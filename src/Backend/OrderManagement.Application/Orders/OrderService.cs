@@ -15,17 +15,20 @@ public class OrderService : IOrderService
     private readonly IProductCatalog _productCatalog;
     private readonly IOutboxWriter _outboxWriter;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IOrderStatusNotifier _statusNotifier;
 
     public OrderService(
         IOrderRepository orderRepository,
         IProductCatalog productCatalog,
         IOutboxWriter outboxWriter,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IOrderStatusNotifier statusNotifier)
     {
         _orderRepository = orderRepository;
         _productCatalog = productCatalog;
         _outboxWriter = outboxWriter;
         _unitOfWork = unitOfWork;
+        _statusNotifier = statusNotifier;
     }
 
     public async Task<Order> CreateOrderAsync(
@@ -67,4 +70,31 @@ public class OrderService : IOrderService
 
     public async Task<Order> GetByIdAsync(Guid id, CancellationToken ct = default) =>
         await _orderRepository.GetByIdWithHistoryAsync(id, ct) ?? throw new OrderNotFoundException(id);
+
+    /// <summary>
+    /// Cancelling is a plain state change on a row the API already owns, so it is
+    /// applied here rather than sent to the Worker as a command: the Worker has no
+    /// work to stop. Whatever it has in flight for this order - a queued message,
+    /// or a delay it is waiting out - finds a terminal order and does nothing,
+    /// which is the domain guard doing its job.
+    /// </summary>
+    public async Task<Order> CancelAsync(Guid id, CancellationToken ct = default)
+    {
+        var order = await _orderRepository.GetByIdWithHistoryAsync(id, ct)
+            ?? throw new OrderNotFoundException(id);
+
+        if (order.IsTerminal)
+            throw new OrderNotCancellableException(id, order.Status);
+
+        order.TransitionTo(OrderStatus.Cancelado, "Cancelado pelo operador.");
+        await _unitOfWork.SaveChangesAsync(ct);
+
+        // Straight to the hub, which lives in this process. The Worker publishes
+        // status changes over RabbitMQ only because it has no hub of its own -
+        // going through the broker here would make cancelling an order depend on
+        // the broker being up, for no gain.
+        await _statusNotifier.NotifyStatusChangedAsync(order.Id, order.Status, ct);
+
+        return order;
+    }
 }

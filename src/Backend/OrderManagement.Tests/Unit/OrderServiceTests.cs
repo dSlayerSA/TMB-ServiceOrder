@@ -16,6 +16,7 @@ public class OrderServiceTests
     private readonly Mock<IProductCatalog> _productCatalog = new();
     private readonly Mock<IOutboxWriter> _outboxWriter = new();
     private readonly Mock<IUnitOfWork> _unitOfWork = new();
+    private readonly Mock<IOrderStatusNotifier> _statusNotifier = new();
     private readonly OrderService _sut;
 
     private readonly Product _notebook = new(Guid.NewGuid(), "Notebook Pro 14", 7499.00m);
@@ -30,7 +31,8 @@ public class OrderServiceTests
             _orderRepository.Object,
             _productCatalog.Object,
             _outboxWriter.Object,
-            _unitOfWork.Object);
+            _unitOfWork.Object,
+            _statusNotifier.Object);
     }
 
     [Fact]
@@ -88,5 +90,56 @@ public class OrderServiceTests
         var act = () => _sut.GetByIdAsync(Guid.NewGuid());
 
         await act.Should().ThrowAsync<OrderNotFoundException>();
+    }
+
+    [Fact]
+    public async Task CancelAsync_CancelsAnOrderTheWorkerHasNotPickedUpYet()
+    {
+        var order = Order.Create("Maria Silva", _notebook);
+        _orderRepository
+            .Setup(r => r.GetByIdWithHistoryAsync(order.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(order);
+
+        var cancelled = await _sut.CancelAsync(order.Id);
+
+        cancelled.Status.Should().Be(OrderStatus.Cancelado);
+        cancelled.StatusHistories.Should().Contain(h => h.Status == OrderStatus.Cancelado);
+        _unitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+
+        // The hub lives in this process, so cancelling pushes to it directly
+        // instead of going out over the broker and back.
+        _statusNotifier.Verify(
+            n => n.NotifyStatusChangedAsync(order.Id, OrderStatus.Cancelado, It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task CancelAsync_RefusesAnOrderThatHasAlreadySettled()
+    {
+        var order = Order.Create("Maria Silva", _notebook);
+        order.TransitionTo(OrderStatus.Processando);
+        order.TransitionTo(OrderStatus.Finalizado);
+
+        _orderRepository
+            .Setup(r => r.GetByIdWithHistoryAsync(order.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(order);
+
+        var cancelling = async () => await _sut.CancelAsync(order.Id);
+
+        await cancelling.Should().ThrowAsync<OrderNotCancellableException>();
+        order.Status.Should().Be(OrderStatus.Finalizado);
+        _unitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CancelAsync_ThrowsWhenTheOrderDoesNotExist()
+    {
+        _orderRepository
+            .Setup(r => r.GetByIdWithHistoryAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Order?)null);
+
+        var cancelling = async () => await _sut.CancelAsync(Guid.NewGuid());
+
+        await cancelling.Should().ThrowAsync<OrderNotFoundException>();
     }
 }

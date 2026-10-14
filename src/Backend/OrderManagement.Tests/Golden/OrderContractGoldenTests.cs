@@ -63,7 +63,8 @@ public class OrderContractGoldenTests
         outboxWriter.Setup(w => w.Enqueue(It.IsAny<OutboxMessage>())).Callback<OutboxMessage>(m => enqueued = m);
 
         var service = new OrderService(
-            repository.Object, catalog.Object, outboxWriter.Object, unitOfWork.Object);
+            repository.Object, catalog.Object, outboxWriter.Object, unitOfWork.Object,
+            new Mock<IOrderStatusNotifier>().Object);
         await service.CreateOrderAsync("Maria Silva", Notebook.Id);
 
         Assert.NotNull(enqueued);
