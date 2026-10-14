@@ -163,7 +163,6 @@ namespace OrderManagement.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("OrderManagement.Domain.Orders.OrderStatusHistory", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("ChangedAt")
